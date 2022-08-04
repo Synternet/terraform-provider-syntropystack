@@ -1,6 +1,6 @@
 TEST?=$$(go list ./... | grep -v 'vendor')
 HOSTNAME=registry.terraform.io
-NAMESPACE=syntropy
+NAMESPACE=SyntropyNet
 NAME=syntropystack
 BINARY=terraform-provider-${NAME}
 VERSION=0.3.2

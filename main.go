@@ -32,7 +32,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/syntropy/syntropystack",
+		Address: "registry.terraform.io/SyntropyNet/syntropystack",
 		Debug:   debugMode,
 	}
 
