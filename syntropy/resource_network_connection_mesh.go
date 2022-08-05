@@ -23,7 +23,7 @@ type networkConnectionMeshResource struct {
 
 func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
-		Description: "syntropy_network_connection_mesh creates network mesh between agents",
+		Description: "syntropystack_network_connection_mesh creates network mesh between agents",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Description: "Network connection mesh ID",

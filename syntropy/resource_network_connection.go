@@ -25,7 +25,7 @@ type networkConnectionResource struct {
 
 func (t networkConnectionResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
-		Description: "syntropy_network_connection creates connection between two Syntropy Platform agents",
+		Description: "syntropystack_network_connection creates connection between two Syntropy Platform agents",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Description: "Network connection ID",
