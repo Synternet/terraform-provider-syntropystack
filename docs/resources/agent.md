@@ -3,12 +3,12 @@
 page_title: "syntropystack_agent Resource - terraform-provider-syntropystack"
 subcategory: ""
 description: |-
-  syntropystack_agent creates virtual Syntropy platform agent
+  Creates virtual Syntropy platform agent
 ---
 
 # syntropystack_agent (Resource)
 
-syntropystack_agent creates virtual Syntropy platform agent
+Creates virtual Syntropy platform agent
 
 ## Example Usage
 
