@@ -3,12 +3,12 @@
 page_title: "syntropystack_network_connection Resource - terraform-provider-syntropystack"
 subcategory: ""
 description: |-
-  syntropystacknetworkconnection creates connection between two Syntropy Platform agents
+  Creates connection between two Syntropy Platform agents
 ---
 
 # syntropystack_network_connection (Resource)
 
-syntropystack_network_connection creates connection between two Syntropy Platform agents
+Creates connection between two Syntropy Platform agents
 
 ## Example Usage
 

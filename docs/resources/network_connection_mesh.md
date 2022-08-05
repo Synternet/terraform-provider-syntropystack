@@ -3,12 +3,12 @@
 page_title: "syntropystack_network_connection_mesh Resource - terraform-provider-syntropystack"
 subcategory: ""
 description: |-
-  syntropystacknetworkconnection_mesh creates network mesh between agents
+  Creates network mesh between agents
 ---
 
 # syntropystack_network_connection_mesh (Resource)
 
-syntropystack_network_connection_mesh creates network mesh between agents
+Creates network mesh between agents
 
 ## Example Usage
 

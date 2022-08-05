@@ -23,7 +23,7 @@ type agentResource struct {
 
 func (t agentResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
-		Description: "syntropystack_agent creates virtual Syntropy platform agent",
+		Description: "Creates virtual Syntropy platform agent",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Description: "Agent ID",
