@@ -118,7 +118,9 @@ func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceT
 }
 
 func (p *provider) GetDataSources(ctx context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
-	return map[string]tfsdk.DataSourceType{}, nil
+	return map[string]tfsdk.DataSourceType{
+		"syntropystack_agent": agentDataSourceType{},
+	}, nil
 }
 
 func convertProviderType(in tfsdk.Provider) (provider, diag.Diagnostics) {
