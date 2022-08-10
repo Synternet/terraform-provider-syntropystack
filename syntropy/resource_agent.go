@@ -73,7 +73,7 @@ func (t agentResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (
 }
 
 func (r agentResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan AgentData
+	var plan AgentResource
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -100,7 +100,7 @@ func (r agentResource) Create(ctx context.Context, req tfsdk.CreateResourceReque
 }
 
 func (r agentResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var state AgentData
+	var state AgentResource
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -137,7 +137,7 @@ func (r agentResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, 
 }
 
 func (r agentResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan AgentData
+	var plan AgentResource
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -161,7 +161,7 @@ func (r agentResource) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 }
 
 func (r agentResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var data AgentData
+	var data AgentResource
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)

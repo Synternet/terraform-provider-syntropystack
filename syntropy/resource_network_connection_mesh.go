@@ -26,7 +26,7 @@ func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk
 		Description: "Creates network mesh between agents",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Description: "Network connection mesh ID",
+				Description: "Network connection mesh ID randomly generated",
 				Type:        types.StringType,
 				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
