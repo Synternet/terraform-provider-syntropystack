@@ -64,3 +64,10 @@ func tfValueToDateP(date string) (*time.Time, error) {
 	}
 	return &t, nil
 }
+
+func sumOfNaturalNumbers(n int) (sum int) {
+	for i := 0; i < n; i++ {
+		sum += i
+	}
+	return sum
+}

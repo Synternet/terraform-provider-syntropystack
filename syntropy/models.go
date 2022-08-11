@@ -3,10 +3,18 @@ package syntropy
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
 type Connection struct {
-	Agent1ID          int32 `tfsdk:"agent_1_id"`
-	Agent2ID          int32 `tfsdk:"agent_2_id"`
-	ConnectionGroupID int32 `tfsdk:"agent_connection_group_id"`
+	Agent1ID          int64 `tfsdk:"agent_1_id"`
+	Agent2ID          int64 `tfsdk:"agent_2_id"`
+	ConnectionGroupID int64 `tfsdk:"agent_connection_group_id"`
 }
+
+type NetworkConnectionMeshEdit struct {
+	ID          types.String `tfsdk:"id"`
+	AgentIds    []int32      `tfsdk:"agent_ids"`
+	Connections types.Set    `tfsdk:"connections"`
+	SdnEnabled  types.Bool   `tfsdk:"sdn_enabled"`
+}
+
 type NetworkConnectionMeshData struct {
 	ID          types.String `tfsdk:"id"`
 	AgentIds    []int32      `tfsdk:"agent_ids"`

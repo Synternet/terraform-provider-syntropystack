@@ -2,8 +2,6 @@ package syntropy
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -32,7 +30,7 @@ func (t networkConnectionResourceType) GetSchema(ctx context.Context) (tfsdk.Sch
 				Type:        types.Int64Type,
 				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+					tfsdk.RequiresReplace(),
 				},
 			},
 			"agent_peer": {
@@ -105,6 +103,10 @@ func (r networkConnectionResource) Read(ctx context.Context, req tfsdk.ReadResou
 
 	connection, err := r.getConnectionGroupByAgentIDs(ctx, int32(state.AgentIds[0]), int32(state.AgentIds[1]))
 	if err != nil {
+		if err == ErrConnectionNotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("Error while reading network connection", err.Error())
 		return
 	}
@@ -113,6 +115,7 @@ func (r networkConnectionResource) Read(ctx context.Context, req tfsdk.ReadResou
 	state.ID = types.Int64{Value: int64(connection.AgentConnectionGroupId)}
 
 	diags = resp.State.Set(ctx, &state)
+
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -168,7 +171,7 @@ func (r networkConnectionResource) ImportState(ctx context.Context, req tfsdk.Im
 }
 
 func (r networkConnectionResource) getConnectionGroupByAgentIDs(ctx context.Context, agentID1 int32, agentID2 int32) (*syntropy.V1Connection, error) {
-	resp, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsGet(ctx).Take(1000).Execute()
+	resp, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsGet(ctx).Execute()
 	if err != nil {
 		return nil, err
 	}
@@ -178,6 +181,5 @@ func (r networkConnectionResource) getConnectionGroupByAgentIDs(ctx context.Cont
 			return &group, nil
 		}
 	}
-
-	return nil, errors.New(fmt.Sprintf("Connection not found between agent_1=%d and agent_2=%d", agentID1, agentID2))
+	return nil, ErrConnectionNotFound
 }
