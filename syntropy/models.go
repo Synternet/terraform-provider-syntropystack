@@ -104,3 +104,9 @@ type ServiceSubnet struct {
 	IP      string `tfsdk:"subnet_ip"`
 	Enabled bool   `tfsdk:"is_subnet_enabled"`
 }
+
+type NetworkConnectionSubnet struct {
+	ConnectionGroupID types.Int64 `tfsdk:"connection_group_id"`
+	SubnetID          types.Int64 `tfsdk:"subnet_id"`
+	Enable            types.Bool  `tfsdk:"enable"`
+}

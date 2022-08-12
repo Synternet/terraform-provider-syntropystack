@@ -2,6 +2,7 @@ package syntropy
 
 import (
 	"context"
+	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -109,6 +110,11 @@ func (d networkConnectionServiceDataSource) Read(ctx context.Context, request tf
 	resp, _, err := d.provider.client.ConnectionsApi.V1NetworkConnectionsServicesGet(ctx).Filter(csID).Execute()
 	if err != nil {
 		response.Diagnostics.AddError("Error while getting network connection services", err.Error())
+		return
+	}
+
+	if len(resp.Data) == 0 {
+		response.Diagnostics.AddError(fmt.Sprintf("Connection not found by ID = %s", csID), "")
 		return
 	}
 

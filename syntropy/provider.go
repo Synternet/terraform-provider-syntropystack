@@ -111,9 +111,10 @@ func NewClient(ctx context.Context, accessKey, apiURL string) *syntropy.APIClien
 
 func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"syntropystack_network_connection_mesh": networkConnectionMeshResourceType{},
-		"syntropystack_network_connection":      networkConnectionResourceType{},
-		"syntropystack_agent":                   agentResourceType{},
+		"syntropystack_network_connection_mesh":          networkConnectionMeshResourceType{},
+		"syntropystack_network_connection":               networkConnectionResourceType{},
+		"syntropystack_enable_network_connection_subnet": networkConnectionSubnetResourceType{},
+		"syntropystack_agent":                            agentResourceType{},
 	}, nil
 }
 
