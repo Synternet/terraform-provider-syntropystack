@@ -85,6 +85,11 @@ func (r networkConnectionResource) Create(ctx context.Context, req tfsdk.CreateR
 		return
 	}
 
+	if len(connection.Data) == 0 {
+		resp.Diagnostics.AddError("Error while creating network connection. API returned empty response body", err.Error())
+		return
+	}
+
 	plan.ID = types.Int64{Value: int64(*connection.Data[0].AgentConnectionGroupId)}
 
 	diags = resp.State.Set(ctx, &plan)
