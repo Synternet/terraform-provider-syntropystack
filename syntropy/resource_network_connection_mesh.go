@@ -26,7 +26,7 @@ func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk
 		Description: "Creates network mesh between agents",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Description: "Network connection mesh ID",
+				Description: "Network connection mesh ID randomly generated",
 				Type:        types.StringType,
 				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
@@ -48,22 +48,19 @@ func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk
 			"connections": {
 				Description: "Created connections",
 				Computed:    true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
-				},
-				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
+				Attributes: tfsdk.SetNestedAttributes(map[string]tfsdk.Attribute{
 					"agent_1_id": {
-						Type:        types.NumberType,
+						Type:        types.Int64Type,
 						Computed:    true,
 						Description: "Agent 1 ID",
 					},
 					"agent_2_id": {
-						Type:        types.NumberType,
+						Type:        types.Int64Type,
 						Computed:    true,
 						Description: "Agent 2 ID",
 					},
 					"agent_connection_group_id": {
-						Type:        types.NumberType,
+						Type:        types.Int64Type,
 						Computed:    true,
 						Description: "Agent connection group ID",
 					},
@@ -96,26 +93,23 @@ func (r networkConnectionMeshResource) Create(ctx context.Context, req tfsdk.Cre
 		})
 	}
 
-	connections, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsCreateMesh(ctx).V1NetworkConnectionsCreateMeshRequest(syntropy.V1NetworkConnectionsCreateMeshRequest{
+	_, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsCreateMesh(ctx).V1NetworkConnectionsCreateMeshRequest(syntropy.V1NetworkConnectionsCreateMeshRequest{
 		AgentIds:   agentList,
 		SdnEnabled: &plan.SdnEnabled.Value,
 	}).Execute()
 	if err != nil {
-		resp.Diagnostics.AddError("Error while creating network connection mesh", err.Error())
+		resp.Diagnostics.AddError("Error while creating network mesh", err.Error())
 		return
 	}
 
-	var connResults []Connection
-	for _, conn := range connections.Data {
-		connResults = append(connResults, Connection{
-			Agent1ID:          *conn.Agent1Id,
-			Agent2ID:          *conn.Agent2Id,
-			ConnectionGroupID: *conn.AgentConnectionGroupId,
-		})
+	connections, err := r.GetConnectionsListByAgentID(ctx, plan.AgentIds)
+	if err != nil {
+		resp.Diagnostics.AddError("Error while getting network mesh connections", err.Error())
+		return
 	}
 
 	plan.ID = types.String{Value: uuid.New().String()}
-	plan.Connections = connResults
+	plan.Connections = connections
 
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -123,12 +117,29 @@ func (r networkConnectionMeshResource) Create(ctx context.Context, req tfsdk.Cre
 
 func (r networkConnectionMeshResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	var state NetworkConnectionMeshData
+	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	connections, err := r.GetConnectionsListByAgentID(ctx, state.AgentIds)
+	if err != nil {
+		resp.Diagnostics.AddError("Error while getting network mesh connections", err.Error())
+		return
+	}
+
+	expectedConnections := sumOfNaturalNumbers(len(state.AgentIds))
+	// If expected connections count not equal to returned connections count this means that changes were made outside
+	// terraform. In this case we need to force terraform to re-run apply
+	if expectedConnections != len(connections) {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	state.Connections = connections
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -138,14 +149,23 @@ func (r networkConnectionMeshResource) Read(ctx context.Context, req tfsdk.ReadR
 }
 
 func (r networkConnectionMeshResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	resp.Diagnostics.AddError("Not implemented yet", "")
-	return
-
-	var plan NetworkConnectionMeshData
+	var plan, state NetworkConnectionMeshEdit
+	ctx = r.provider.createAuthContext(ctx)
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
-	resp.Diagnostics.AddError("Not implemented yet", "")
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags = r.FindAndDeleteOldConnections(ctx, state, plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -157,42 +177,124 @@ func (r networkConnectionMeshResource) Update(ctx context.Context, req tfsdk.Upd
 		})
 	}
 
-	newConnections, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsCreateMesh(ctx).V1NetworkConnectionsCreateMeshRequest(syntropy.V1NetworkConnectionsCreateMeshRequest{
+	_, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsCreateMesh(ctx).V1NetworkConnectionsCreateMeshRequest(syntropy.V1NetworkConnectionsCreateMeshRequest{
 		AgentIds:   agentList,
 		SdnEnabled: &plan.SdnEnabled.Value,
 	}).Execute()
 	if err != nil {
-		resp.Diagnostics.AddError("Error while updating network connection mesh", err.Error())
+		resp.Diagnostics.AddError("Error while creating network mesh", err.Error())
 		return
 	}
 
-	var connResults []Connection
-	for _, conn := range newConnections.Data {
-		connResults = append(connResults, Connection{
-			Agent1ID:          *conn.Agent1Id,
-			Agent2ID:          *conn.Agent2Id,
-			ConnectionGroupID: *conn.AgentConnectionGroupId,
-		})
+	connections, err := r.GetConnectionsListByAgentID(ctx, plan.AgentIds)
+	if err != nil {
+		resp.Diagnostics.AddError("Error while getting network mesh connections", err.Error())
+		return
 	}
 
-	plan.Connections = append(plan.Connections, connResults...)
+	newState := NetworkConnectionMeshData{
+		ID:          plan.ID,
+		AgentIds:    plan.AgentIds,
+		Connections: connections,
+		SdnEnabled:  plan.SdnEnabled,
+	}
 
-	diags = resp.State.Set(ctx, &plan)
+	diags = resp.State.Set(ctx, &newState)
 	resp.Diagnostics.Append(diags...)
 }
 
 func (r networkConnectionMeshResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	resp.Diagnostics.AddError("Not implemented yet", "")
-	return
-
 	var data NetworkConnectionMeshData
-
+	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
+	deleteReq := syntropy.V1NetworkConnectionsRemoveRequest{}
+	for _, a := range data.Connections {
+		deleteReq.AgentConnectionGroupIds = append(deleteReq.AgentConnectionGroupIds, int32(a.ConnectionGroupID))
+	}
+
+	_, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsRemove(ctx).V1NetworkConnectionsRemoveRequest(deleteReq).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError("Error while deleting network mesh connections", err.Error())
 		return
 	}
+}
+
+func (r networkConnectionMeshResource) FindAndDeleteOldConnections(ctx context.Context, state NetworkConnectionMeshEdit, plan NetworkConnectionMeshEdit) diag.Diagnostics {
+	var (
+		diags           = diag.Diagnostics{}
+		deleteRequest   = syntropy.V1NetworkConnectionsRemoveRequest{}
+		connectionsList []Connection
+	)
+
+	diags = state.Connections.ElementsAs(ctx, &connectionsList, false)
+	if diags.HasError() {
+		return diags
+	}
+
+	for i := 0; i < len(state.AgentIds); i++ {
+		found := false
+		for j := 0; j < len(plan.AgentIds); j++ {
+			if state.AgentIds[i] == plan.AgentIds[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			for _, conn := range connectionsList {
+				if int64(state.AgentIds[i]) == conn.Agent1ID || int64(state.AgentIds[i]) == conn.Agent2ID {
+					deleteRequest.AgentConnectionGroupIds = append(deleteRequest.AgentConnectionGroupIds, int32(conn.ConnectionGroupID))
+				}
+			}
+		}
+	}
+
+	if len(deleteRequest.AgentConnectionGroupIds) == 0 {
+		return nil
+	}
+
+	_, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsRemove(ctx).V1NetworkConnectionsRemoveRequest(deleteRequest).Execute()
+	if err != nil {
+		diags.AddError("Error while deleting network mesh connections", err.Error())
+		return diags
+	}
+
+	return nil
+}
+
+func (r networkConnectionMeshResource) GetConnectionsListByAgentID(ctx context.Context, agentIDs []int32) ([]Connection, error) {
+	var filter []syntropy.V1AgentPairFilter
+	for i := 0; i < len(agentIDs)-1; i++ {
+		for j := i + 1; j < len(agentIDs); j++ {
+			filter = append(filter, syntropy.V1AgentPairFilter{
+				Agent2Id: agentIDs[i],
+				Agent1Id: agentIDs[j],
+			})
+		}
+	}
+
+	connectionList, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsSearch(ctx).V1NetworkConnectionsSearchRequest(syntropy.V1NetworkConnectionsSearchRequest{
+		Filter: &syntropy.V1ConnectionFilter{
+			AgentPair: filter,
+		},
+		Order: nil,
+		Skip:  nil,
+		Take:  nil,
+	}).Execute()
+	if err != nil {
+		return nil, err
+	}
+
+	var connections []Connection
+	for _, connection := range connectionList.Data {
+		connections = append(connections, Connection{
+			Agent1ID:          int64(connection.Agent1.AgentId),
+			Agent2ID:          int64(connection.Agent2.AgentId),
+			ConnectionGroupID: int64(connection.AgentConnectionGroupId),
+		})
+	}
+	return connections, nil
 }
 
 func (r networkConnectionMeshResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {

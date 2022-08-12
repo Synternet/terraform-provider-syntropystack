@@ -3,7 +3,7 @@ module github.com/SyntropyNet/terraform-provider-syntropystack
 go 1.17
 
 require (
-	github.com/SyntropyNet/syntropy-sdk-go v0.0.0-20220801142430-e770f5a2ff56
+	github.com/SyntropyNet/syntropy-sdk-go v0.1.2
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/hashicorp/terraform-plugin-framework v0.10.0
