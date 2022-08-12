@@ -2,6 +2,7 @@ package syntropy
 
 import (
 	"context"
+	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -23,7 +24,7 @@ type networkConnectionSubnetResource struct {
 
 func (t networkConnectionSubnetResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
-		Description: "Enables connection services inside connection group",
+		Description: "Enables services inside connection group",
 		Attributes: map[string]tfsdk.Attribute{
 			"connection_group_id": {
 				Description: "Connection group ID",
@@ -95,13 +96,24 @@ func (r networkConnectionSubnetResource) Read(ctx context.Context, req tfsdk.Rea
 		return
 	}
 
-	enabled, err := r.isServiceEnabled(ctx, strconv.FormatInt(state.ConnectionGroupID.Value, 10), state.SubnetID.Value)
+	connection, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsServicesGet(ctx).Filter(strconv.FormatInt(state.ConnectionGroupID.Value, 10)).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Error while getting network connection service", err.Error())
 		return
 	}
 
-	state.Enable = types.Bool{Value: enabled}
+	if len(connection.Data) == 0 {
+		resp.Diagnostics.AddError(fmt.Sprintf("Connection not found by ID = %s", strconv.FormatInt(state.ConnectionGroupID.Value, 10)), "")
+		return
+	}
+
+	state.Enable = types.Bool{Value: false}
+	for _, subnet := range connection.Data[0].AgentConnectionSubnets {
+		if int64(subnet.AgentServiceSubnetId) == state.SubnetID.Value {
+			state.Enable = types.Bool{Value: subnet.AgentConnectionSubnetIsEnabled}
+			break
+		}
+	}
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -161,21 +173,6 @@ func (r networkConnectionSubnetResource) Delete(ctx context.Context, req tfsdk.D
 		resp.Diagnostics.AddError("Error while updating network connection service", err.Error())
 		return
 	}
-}
-
-func (r networkConnectionSubnetResource) isServiceEnabled(ctx context.Context, groupId string, subnetID int64) (bool, error) {
-	connection, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsServicesGet(ctx).Filter(groupId).Execute()
-	if err != nil {
-		return false, err
-	}
-
-	enabled := false
-	for _, subnet := range connection.Data[0].AgentConnectionSubnets {
-		if int64(subnet.AgentServiceSubnetId) == subnetID {
-			return subnet.AgentConnectionSubnetIsEnabled, nil
-		}
-	}
-	return enabled, nil
 }
 
 func (r networkConnectionSubnetResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
