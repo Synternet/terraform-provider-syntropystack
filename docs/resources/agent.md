@@ -5,6 +5,7 @@ description: |-
 ---
 
 Syntropy Agent is an easy-to-use dependency to automatically encrypt and connect endpoints within a network. Syntropy's user interface allows heightened visibility into network health and connectivity.
+For more information about what else you can do with our *agent*, feel free to checkout out our [documentation](https://docs.syntropystack.com/docs/what-is-syntropy-agent).
 
 ## Example Usage
  ```terraform
@@ -32,3 +33,23 @@ resource "syntropystack_agent" "agent" {
 
 - `id` (Number) Agent ID
 
+
+
+ ## Provider list
+Agent's provider IDs *full list* can be found [here](https://docs.syntropystack.com/docs/syntropy-agent-variables#syntropy-provider).
+
+
+| Provider            | Value |
+|---------------------|-------|
+| Amazon Web Services | 1     |
+| Microsoft Azure     | 2     |
+| Google Cloud        | 3     |
+| Alibaba Cloud       | 4     |
+| Oracle Cloud        | 5     |
+| DigitalOcean        | 6     |
+
+## How to generate *Agent Token*?
+
+First things first - to start using Syntropy Agent you need to set up an Agent token. Head to User section to create one.
+Click on New Agent Token and create one by adding a name and its expiration date.
+More details can be fund in [documentation](https://docs.syntropystack.com/docs/get-your-agent-token).

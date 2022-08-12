@@ -6,7 +6,7 @@ description: |-
 
 Creates network mesh between agents.
 
-## Example 
+## Example Usage
  ```terraform
 data "syntropystack_agent_search" "results" {
   filter = {
