@@ -4,7 +4,10 @@ page_title: "Network Connection Mesh"
 description: |-
 ---
 
-Creates network mesh between agents.
+Creates [Mesh Connections](https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies).To establish a mesh connection between 2 agents, you need to provide the following:
+
+- agent 1 ID
+- agent 2 ID
 
 ## Example Usage
  ```terraform

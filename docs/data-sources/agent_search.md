@@ -4,7 +4,7 @@ page_title: "Agent Search Data Source"
 description: |-
 ---
 
-Datasource retrieves Syntropy agent data list.
+Datasource retrieves Syntropy agent data list. For more information about agent data can be found [here](https://docs.syntropystack.com/reference/agent-object).
 
 ## Example Usage
  ```terraform

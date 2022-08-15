@@ -5,6 +5,10 @@ description: |-
 ---
 
 Creates connection between two Syntropy Platform agents.
+Creates point to point Connections.To establish a [P2P connection]9https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies) between 2 agents, you need to provide the following:
+
+- agent 1 ID
+- agent 2 ID
 
 ## Example Usage
  ```terraform
