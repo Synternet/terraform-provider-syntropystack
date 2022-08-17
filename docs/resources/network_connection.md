@@ -4,6 +4,8 @@ page_title: "Network Connection"
 description: |-
 ---
 
+# syntropystack_network_connection ( Resource )
+
 Creates connection between two Syntropy Platform agents.
 Creates point to point Connections.To establish a [P2P connection](https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies) between 2 agents, you need to provide the following:
 

@@ -4,6 +4,8 @@ page_title: "Network Connection Service Data Source"
 description: |-
 ---
 
+# syntropystack_network_connection_service ( Data Source )
+
 Datasource retrieves list of services that were discovered in connection.
 
 ## Example Usage

@@ -4,6 +4,8 @@ page_title: "Network Connection Mesh"
 description: |-
 ---
 
+# syntropystack_network_connection_mesh ( Resource )
+
 Creates [Mesh Connections](https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies).To establish a mesh connection between 2 agents, you need to provide the following:
 
 - agent 1 ID

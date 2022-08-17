@@ -4,6 +4,8 @@ page_title: "Agent"
 description: |-
 ---
 
+# syntropystack_agent ( Resource )
+
 Syntropy Agent is an easy-to-use dependency to automatically encrypt and connect endpoints within a network. Syntropy's user interface allows heightened visibility into network health and connectivity.
 For more information about what else you can do with our *agent*, feel free to checkout out our [documentation](https://docs.syntropystack.com/docs/what-is-syntropy-agent).
 
@@ -35,18 +37,18 @@ resource "syntropystack_agent" "agent" {
 
 
 
- ## Provider list
-Agent's provider IDs *full list* can be found [here](https://docs.syntropystack.com/docs/syntropy-agent-variables#syntropy-provider).
-
+## Provider list
 
 | Provider            | Value |
-|---------------------|-------|
+|---------------------| :---: |
 | Amazon Web Services | 1     |
 | Microsoft Azure     | 2     |
 | Google Cloud        | 3     |
 | Alibaba Cloud       | 4     |
 | Oracle Cloud        | 5     |
 | DigitalOcean        | 6     |
+
+Agent's provider IDs *full list* can be found [here](https://docs.syntropystack.com/docs/syntropy-agent-variables#syntropy-provider).
 
 ## How to generate *Agent Token*?
 

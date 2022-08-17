@@ -4,6 +4,8 @@ page_title: "Agent Data Source"
 description: |-
 ---
 
+# syntropystack_agent ( Data Source )
+
 Datasource retrieves Syntropy agent data. For more information about agent data can be found [here](https://docs.syntropystack.com/reference/agent-object).
 
 ## Example Usage
