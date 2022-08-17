@@ -30,7 +30,7 @@ func (d networkConnectionServiceDataSourceType) GetSchema(_ context.Context) (tf
 				},
 			},
 			"connection_group_id": {
-				Description: "Network connection group ID",
+				Description: "Unique identifier for the connection.",
 				Type:        types.Int64Type,
 				Required:    true,
 			},

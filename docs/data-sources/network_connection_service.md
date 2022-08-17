@@ -38,7 +38,7 @@ data "syntropystack_network_connection_service" "svc" {
 ### Required
 
 - `agent_id` (Number) Syntropy agent ID
-- `connection_group_id` (Number) Network connection group ID
+- `connection_group_id` (Number) Unique identifier for the connection.
 
 ### Optional
 

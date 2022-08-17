@@ -32,9 +32,9 @@ data "syntropystack_agent_search" "agent_2" {
 
 ### Optional
 
-- `filter` (Attributes) Syntropy agent filter (see [below for nested schema](#nestedatt--filter))
+- `filter` (Attributes) Syntropy agent search filter (see [below for nested schema](#nestedatt--filter))
 - `search` (String) Agent name pattern. This will be used to filter out agent names that doesn't have specified patter
-- `skip` (Number) Offset used for pagination
+- `skip` (Number) Number of items to skip
 - `take` (Number) Number of items to take
 
 ### Read-Only
@@ -64,20 +64,20 @@ Optional:
 
 Read-Only:
 
-- `device_id` (String) Agent device id
-- `id` (Number) Agent ID
-- `is_online` (Boolean) Agent online status
-- `is_virtual` (Boolean) Is agent virtual
-- `location_city` (String) Agent city location
-- `location_country` (String) Agent location country code
-- `modified_at` (String) Agent modified date
-- `name` (String) Agent name
-- `provider` (Attributes) Agent provider details (see [below for nested schema](#nestedatt--agents--provider))
-- `public_ipv4` (String) Agent public IP
-- `status` (String) Agent status
-- `tags` (Attributes List) Agent tags (see [below for nested schema](#nestedatt--agents--tags))
-- `type` (String) Agent type
-- `version` (String) Agent version
+- `device_id` (String) A unique agent identifier. Usually machine id or other unique UUID with a workspace id prefix (to scope this agent to workspace).
+- `id` (Number) Unique identifier for the agent
+- `is_online` (Boolean) Current status of the agent.
+- `is_virtual` (Boolean) Indicates if it's a virtual agent.
+- `location_city` (String) City, where your agent is based
+- `location_country` (String) Agent's location country two-letter code.
+- `modified_at` (String) Date and time when this agent was modified. Formatted as an ISO 8601 date time string.
+- `name` (String) Name of the agent as it appears in Platform UI
+- `provider` (Attributes) Returns provider of agent's endpoint (see [below for nested schema](#nestedatt--agents--provider))
+- `public_ipv4` (String) IP address of the agent in IPv4 format
+- `status` (String) Current status of the agent.
+- `tags` (Attributes List) Agent specific words that can help you to create some rules around specific tags. (see [below for nested schema](#nestedatt--agents--tags))
+- `type` (String) Possible types: LINUX, MACOS, WINDOWS, VIRTUAL
+- `version` (String) Version of the agent.
 
 <a id="nestedatt--agents--provider"></a>
 ### Nested Schema for `agents.provider`
