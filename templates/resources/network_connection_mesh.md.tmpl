@@ -1,0 +1,14 @@
+---
+layout: ""
+page_title: "Network Connection Mesh"
+description: |-
+---
+# {{ .Name }} ( {{ .Type }} )
+
+Creates [Mesh Connections](https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies).
+To establish a mesh connection between any number of agents, you need to provide an array of `agent IDs` (minimum of two).
+
+## Example Usage
+ {{tffile .ExampleFile}}
+
+ {{ .SchemaMarkdown }}

@@ -21,7 +21,7 @@ func (d agentSearchDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, d
 			"skip": {
 				Type:        types.Int64Type,
 				Optional:    true,
-				Description: "Offset used for pagination",
+				Description: "Number of items to skip",
 			},
 			"take": {
 				Type:        types.Int64Type,
@@ -35,7 +35,7 @@ func (d agentSearchDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, d
 				Description: "Agent name pattern. This will be used to filter out agent names that doesn't have specified patter",
 			},
 			"filter": {
-				Description: "Syntropy agent filter",
+				Description: "Syntropy agent search filter",
 				Optional:    true,
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"id": {
@@ -115,67 +115,67 @@ func (d agentSearchDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, d
 				Computed: true,
 				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
 					"id": {
-						Description: "Agent ID",
+						Description: "Unique identifier for the agent",
 						Computed:    true,
 						Type:        types.Int64Type,
 					},
 					"name": {
-						Description: "Agent name",
+						Description: "Name of the agent as it appears in Platform UI",
 						Computed:    true,
 						Type:        types.StringType,
 					},
 					"public_ipv4": {
-						Description: "Agent public IP",
+						Description: "IP address of the agent in IPv4 format",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"status": {
-						Description: "Agent status",
+						Description: "Current status of the agent.",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"is_online": {
-						Description: "Agent online status",
+						Description: "Current status of the agent.",
 						Type:        types.BoolType,
 						Computed:    true,
 					},
 					"version": {
-						Description: "Agent version",
+						Description: "Version of the agent.",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"location_country": {
-						Description: "Agent location country code",
+						Description: "Agent's location country two-letter code.",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"location_city": {
-						Description: "Agent city location",
+						Description: "City, where your agent is based",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"device_id": {
-						Description: "Agent device id",
+						Description: "A unique agent identifier. Usually machine id or other unique UUID with a workspace id prefix (to scope this agent to workspace).",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"is_virtual": {
-						Description: "Is agent virtual",
+						Description: "Indicates if it's a virtual agent.",
 						Type:        types.BoolType,
 						Computed:    true,
 					},
 					"type": {
-						Description: "Agent type",
+						Description: "Possible types: LINUX, MACOS, WINDOWS, VIRTUAL",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"modified_at": {
-						Description: "Agent modified date",
+						Description: "Date and time when this agent was modified. Formatted as an ISO 8601 date time string.",
 						Type:        types.StringType,
 						Computed:    true,
 					},
 					"tags": {
-						Description: "Agent tags",
+						Description: "Agent specific words that can help you to create some rules around specific tags.",
 						Computed:    true,
 						Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
 							"id": {
@@ -191,7 +191,7 @@ func (d agentSearchDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, d
 						}),
 					},
 					"provider": {
-						Description: "Agent provider details",
+						Description: "Returns provider of agent's endpoint",
 						Computed:    true,
 						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 							"id": {
