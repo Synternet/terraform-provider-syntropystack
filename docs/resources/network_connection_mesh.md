@@ -4,8 +4,17 @@ page_title: "Network Connection Mesh"
 description: |-
 ---
 
+<<<<<<< HEAD
 Creates [Mesh Connections](https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies).
 To establish a mesh connection between any number of agents, you need to provide an array of `agent IDs` (minimum of two).
+=======
+# syntropystack_network_connection_mesh ( Resource )
+
+Creates [Mesh Connections](https://docs.syntropystack.com/docs/network-as-code-topologies#creating-complex-topologies).To establish a mesh connection between 2 agents, you need to provide the following:
+
+- agent 1 ID
+- agent 2 ID
+>>>>>>> 1c80626e927c0cebe273eccf6a4aeffc6b889261
 
 ## Example Usage
  ```terraform

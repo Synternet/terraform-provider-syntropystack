@@ -16,10 +16,10 @@ type agentDataSourceType struct{}
 
 func (d agentDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
-		Description: "Datasource retrieves Syntropy agent data",
+		Description: "Datasource retrieves Syntropy agent data by agent name",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Description: "Network connection ID",
+				Description: "Unique identifier for the agent",
 				Type:        types.Int64Type,
 				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
@@ -27,62 +27,62 @@ func (d agentDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				},
 			},
 			"name": {
-				Description: "Filter by agent modified at to date",
+				Description: "Name of the agent as it appears in Platform UI",
 				Required:    true,
 				Type:        types.StringType,
 			},
 			"public_ipv4": {
-				Description: "Agent public IP",
+				Description: "IP address of the agent in IPv4 format",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"status": {
-				Description: "Agent status",
+				Description: "Current status of the agent.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"is_online": {
-				Description: "Agent online status",
+				Description: "Current status of the agent.",
 				Type:        types.BoolType,
 				Computed:    true,
 			},
 			"version": {
-				Description: "Agent version",
+				Description: "Version of the agent.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"location_country": {
-				Description: "Agent location country code",
+				Description: "Agent's location country two-letter code.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"location_city": {
-				Description: "Agent city location",
+				Description: "City, where your agent is based",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"device_id": {
-				Description: "Agent device id",
+				Description: "A unique agent identifier. Usually machine id or other unique UUID with a workspace id prefix (to scope this agent to workspace).",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"is_virtual": {
-				Description: "Is agent virtual",
+				Description: "Indicates if it's a virtual agent.",
 				Type:        types.BoolType,
 				Computed:    true,
 			},
 			"type": {
-				Description: "Agent type",
+				Description: "Possible types: LINUX, MACOS, WINDOWS, VIRTUAL",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"modified_at": {
-				Description: "Agent modified date",
+				Description: "Date and time when this agent was modified. Formatted as an ISO 8601 date time string.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
 			"tags": {
-				Description: "Agent tags",
+				Description: "Agent specific words that can help you to create some rules around specific tags.",
 				Computed:    true,
 				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
 					"id": {
@@ -98,7 +98,7 @@ func (d agentDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				}),
 			},
 			"provider": {
-				Description: "Agent provider details",
+				Description: "Returns provider of agent's endpoint",
 				Computed:    true,
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"id": {

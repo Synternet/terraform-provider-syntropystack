@@ -4,6 +4,8 @@ page_title: "Enable Network Connection Subnet"
 description: |-
 ---
 
+# syntropystack_enable_network_connection_subnet ( Resource )
+
 Enables services inside connection group.
 
 ## Example Usage
