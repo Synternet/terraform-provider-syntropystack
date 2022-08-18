@@ -6,7 +6,7 @@ description: |-
 
 # Syntropy Stack Provider
 
-The Syntropy Stack provider is used to configure your Syntropy Stack Platform infrastructure. See the Getting Started page for more details and for to learn how you can use Syntropy Agents and connect them securely.
+The Syntropy Stack provider is used to configure your Syntropy Stack Platform infrastructure. See the [Getting Started page](https://docs.syntropystack.com/docs/getting-started) for more details and for to learn how you can use Syntropy Agents and connect them securely.
 
 ## Example Usage
 
