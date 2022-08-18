@@ -4,15 +4,10 @@ page_title: "Agent"
 description: |-
 ---
 
-<<<<<<< HEAD
-Syntropy Agent is an easy-to-use dependency to automatically encrypt and connect endpoints within a network. Syntropy's user interface allows heightened visibility into network health and connectivity. 
-By using Terraform, you have an ability to create a `virtual agent`. For more information about what else you can do with our *agent*, feel free to checkout out our [documentation](https://docs.syntropystack.com/docs/what-is-syntropy-agent).
-=======
 # syntropystack_agent ( Resource )
 
-Syntropy Agent is an easy-to-use dependency to automatically encrypt and connect endpoints within a network. Syntropy's user interface allows heightened visibility into network health and connectivity.
+Syntropy Agent is an easy-to-use dependency to automatically encrypt and connect endpoints within a network. By using Terraform, you have an ability to create a `virtual agent`. Syntropy's user interface allows heightened visibility into network health and connectivity.
 For more information about what else you can do with our *agent*, feel free to checkout out our [documentation](https://docs.syntropystack.com/docs/what-is-syntropy-agent).
->>>>>>> 1c80626e927c0cebe273eccf6a4aeffc6b889261
 
 ## Example Usage
  ```terraform
