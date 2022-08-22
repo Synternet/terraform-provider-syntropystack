@@ -41,11 +41,6 @@ func (t agentResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Di
 					tfsdk.RequiresReplace(),
 				},
 			},
-			"provider_id": {
-				Description: "Agent provider ID",
-				Type:        types.Int64Type,
-				Required:    true,
-			},
 			"token": {
 				Description: "Agent token",
 				Type:        types.StringType,
@@ -81,12 +76,10 @@ func (r agentResource) Create(ctx context.Context, req tfsdk.CreateResourceReque
 		return
 	}
 
-	pId := int32(plan.ProviderId.Value)
 	agent, _, err := r.provider.client.AgentsApi.V1NetworkAgentsCreate(ctx).V1NetworkAgentsCreateRequest(syntropy.V1NetworkAgentsCreateRequest{
-		AgentName:       plan.Name.Value,
-		AgentProviderId: &pId,
-		AgentToken:      plan.Token.Value,
-		AgentTags:       plan.Tags,
+		AgentName:  plan.Name.Value,
+		AgentToken: plan.Token.Value,
+		AgentTags:  plan.Tags,
 	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Error while creating virtual agent", err.Error())
@@ -126,7 +119,6 @@ func (r agentResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, 
 	}
 
 	state.Name = types.String{Value: agent.Data[0].AgentName}
-	state.ProviderId = types.Int64{Value: int64(agent.Data[0].AgentProvider.AgentProviderId)}
 	state.Tags = tags
 
 	diags = resp.State.Set(ctx, &state)
@@ -145,11 +137,9 @@ func (r agentResource) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 		return
 	}
 
-	pId := int32(plan.ProviderId.Value)
 	_, err := r.provider.client.AgentsApi.V1NetworkAgentsUpdate(ctx, int32(plan.ID.Value)).V1NetworkAgentsUpdateRequest(syntropy.V1NetworkAgentsUpdateRequest{
-		AgentTags:       plan.Tags,
-		AgentName:       &plan.Name.Value,
-		AgentProviderId: &pId,
+		AgentTags: plan.Tags,
+		AgentName: &plan.Name.Value,
 	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Error while updating virtual agent", err.Error())

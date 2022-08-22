@@ -1,5 +1,4 @@
 resource "syntropystack_agent" "agent" {
-  name        = "terraform-provider-syntropystack-agent"
-  provider_id = 3
-  token       = "<AGENT_TOKEN>"
+  name  = "terraform-provider-syntropystack-agent"
+  token = "<AGENT_TOKEN>"
 }

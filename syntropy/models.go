@@ -29,11 +29,10 @@ type NetworkConnectionData struct {
 }
 
 type AgentResource struct {
-	ID         types.Int64  `tfsdk:"id"`
-	Name       types.String `tfsdk:"name"`
-	ProviderId types.Int64  `tfsdk:"provider_id"`
-	Token      types.String `tfsdk:"token"`
-	Tags       []string     `tfsdk:"tags"`
+	ID    types.Int64  `tfsdk:"id"`
+	Name  types.String `tfsdk:"name"`
+	Token types.String `tfsdk:"token"`
+	Tags  []string     `tfsdk:"tags"`
 }
 
 type AgentSearchDataSource struct {

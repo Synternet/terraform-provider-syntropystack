@@ -12,9 +12,8 @@ For more information about what else you can do with our *agent*, feel free to c
 ## Example Usage
  ```terraform
 resource "syntropystack_agent" "agent" {
-  name        = "terraform-provider-syntropystack-agent"
-  provider_id = 3
-  token       = "<AGENT_TOKEN>"
+  name  = "terraform-provider-syntropystack-agent"
+  token = "<AGENT_TOKEN>"
 }
 ```
 
@@ -24,7 +23,6 @@ resource "syntropystack_agent" "agent" {
 ### Required
 
 - `name` (String) Agent name
-- `provider_id` (Number) Agent provider ID
 - `token` (String) Agent token
 
 ### Optional
@@ -36,19 +34,6 @@ resource "syntropystack_agent" "agent" {
 - `id` (Number) Agent ID
 
 
-
-## Provider list
-
-| Provider            | Value |
-|---------------------| :---: |
-| Amazon Web Services | 1     |
-| Microsoft Azure     | 2     |
-| Google Cloud        | 3     |
-| Alibaba Cloud       | 4     |
-| Oracle Cloud        | 5     |
-| DigitalOcean        | 6     |
-
-Agent's provider IDs *full list* can be found [here](https://docs.syntropystack.com/docs/syntropy-agent-variables#syntropy-provider).
 
 ## How to generate *Agent Token*?
 
