@@ -28,7 +28,7 @@ provider "syntropystack" {
 ## Additional Info
 
 If you have configuration questions, or general questions about using the provider, try checking out:
-- Syntropy Stack Devs community on Discord (`#stack-support` chennel)
+- Syntropy Stack Devs community on Discord (`#stack-support` channel)
 - Syntropy [Developer Portal](https://docs.syntropystack.com/)
 
 ## Releases
