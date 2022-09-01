@@ -39,4 +39,4 @@ resource "syntropystack_agent" "agent" {
 
 First things first - to start using Syntropy Agent you need to set up an Agent token. Head to User section to create one.
 Click on New Agent Token and create one by adding a name and its expiration date.
-More details can be fund in [documentation](https://docs.syntropystack.com/docs/get-your-agent-token).
+More details can be found in [documentation](https://docs.syntropystack.com/docs/get-your-agent-token).
