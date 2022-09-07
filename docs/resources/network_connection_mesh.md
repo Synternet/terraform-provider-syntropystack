@@ -36,7 +36,7 @@ resource "syntropystack_network_connection_mesh" "test_connection_mesh" {
 
 ### Read-Only
 
-- `connections` (Attributes Set) Created connections (see [below for nested schema](#nestedatt--connections))
+- `connections` (Attributes List) Created connections (see [below for nested schema](#nestedatt--connections))
 - `id` (String) Network connection mesh ID randomly generated
 
 <a id="nestedatt--connections"></a>

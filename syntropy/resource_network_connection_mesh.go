@@ -48,7 +48,7 @@ func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk
 			"connections": {
 				Description: "Created connections",
 				Computed:    true,
-				Attributes: tfsdk.SetNestedAttributes(map[string]tfsdk.Attribute{
+				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
 					"agent_1_id": {
 						Type:        types.Int64Type,
 						Computed:    true,
