@@ -2,6 +2,7 @@ package syntropy
 
 import (
 	"context"
+	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -26,7 +27,7 @@ func (t networkConnectionResourceType) GetSchema(ctx context.Context) (tfsdk.Sch
 		Description: "Creates connection between two Syntropy Platform agents",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Description: "Network connection ID",
+				Description: "Unique identifier for the connection",
 				Type:        types.Int64Type,
 				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
@@ -51,6 +52,42 @@ func (t networkConnectionResourceType) GetSchema(ctx context.Context) (tfsdk.Sch
 				Type:        types.BoolType,
 				Optional:    true,
 			},
+			"services": {
+				Description: "List of services inside in network connection",
+				Computed:    true,
+				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
+					"name": {
+						Type:        types.StringType,
+						Computed:    true,
+						Description: "Network connection service name",
+					},
+					"id": {
+						Type:        types.Int64Type,
+						Computed:    true,
+						Description: "Network connection service ID",
+					},
+					"ip": {
+						Type:        types.StringType,
+						Computed:    true,
+						Description: "Network connection service IP",
+					},
+					"type": {
+						Type:        types.StringType,
+						Computed:    true,
+						Description: "Network connection service type (Kubernetes, Docker, etc.)",
+					},
+					"enabled": {
+						Type:        types.BoolType,
+						Computed:    true,
+						Description: "Is network connection service enabled?",
+					},
+					"agent_id": {
+						Type:        types.Int64Type,
+						Computed:    true,
+						Description: "Network connection agent ID that service is created",
+					},
+				}),
+			},
 		},
 	}, nil
 }
@@ -63,7 +100,7 @@ func (t networkConnectionResourceType) NewResource(ctx context.Context, in tfsdk
 }
 
 func (r networkConnectionResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan NetworkConnectionData
+	var plan NetworkConnection
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -86,18 +123,23 @@ func (r networkConnectionResource) Create(ctx context.Context, req tfsdk.CreateR
 	}
 
 	if len(connection.Data) == 0 {
-		resp.Diagnostics.AddError("Error while creating network connection. API returned empty response body", err.Error())
+		resp.Diagnostics.AddError(fmt.Sprintf("Connection already exists between agents agent_1_id=%d, agent_2_id=%d", plan.AgentIds[0], plan.AgentIds[1]), "Import network connection to state")
 		return
 	}
 
+	connectionDetails, err := getOneConnectionDetails(ctx, *r.provider.client.ConnectionsApi, *connection.Data[0].AgentConnectionGroupId)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %d services", *connection.Data[0].AgentConnectionGroupId), err.Error())
+		return
+	}
 	plan.ID = types.Int64{Value: int64(*connection.Data[0].AgentConnectionGroupId)}
-
+	plan.Services = connectionDetails.Services
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 }
 
 func (r networkConnectionResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var state NetworkConnectionData
+	var state NetworkConnection
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -116,9 +158,14 @@ func (r networkConnectionResource) Read(ctx context.Context, req tfsdk.ReadResou
 		return
 	}
 
-	state.SdnEnabled = types.Bool{Value: connection.AgentConnectionGroupSdnEnabled}
-	state.ID = types.Int64{Value: int64(connection.AgentConnectionGroupId)}
+	connectionDetails, err := getOneConnectionDetails(ctx, *r.provider.client.ConnectionsApi, connection.AgentConnectionGroupId)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %d services", connection.AgentConnectionGroupId), err.Error())
+		return
+	}
 
+	state.Services = connectionDetails.Services
+	state.SdnEnabled = types.Bool{Value: connection.AgentConnectionGroupSdnEnabled}
 	diags = resp.State.Set(ctx, &state)
 
 	resp.Diagnostics.Append(diags...)
@@ -128,7 +175,7 @@ func (r networkConnectionResource) Read(ctx context.Context, req tfsdk.ReadResou
 }
 
 func (r networkConnectionResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan NetworkConnectionData
+	var plan NetworkConnection
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -149,12 +196,20 @@ func (r networkConnectionResource) Update(ctx context.Context, req tfsdk.UpdateR
 		return
 	}
 
+	connectionDetails, err := getOneConnectionDetails(ctx, *r.provider.client.ConnectionsApi, int32(plan.ID.Value))
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %d services", plan.ID.Value), err.Error())
+		return
+	}
+
+	plan.Services = connectionDetails.Services
+
 	diags = resp.State.Set(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 }
 
 func (r networkConnectionResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var data NetworkConnectionData
+	var data NetworkConnection
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)

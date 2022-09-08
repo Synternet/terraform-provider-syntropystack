@@ -2,6 +2,7 @@ package syntropy
 
 import (
 	"context"
+	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -38,15 +39,21 @@ func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk
 				Type: types.SetType{
 					ElemType: types.NumberType,
 				},
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 				Required: true,
 			},
 			"sdn_enabled": {
 				Description: "Should SDN be enabled?",
 				Type:        types.BoolType,
-				Optional:    true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
+				Optional: true,
 			},
 			"connections": {
-				Description: "Created connections",
+				Description: "List of network connections created by mesh resource",
 				Computed:    true,
 				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
 					"agent_1_id": {
@@ -59,10 +66,46 @@ func (t networkConnectionMeshResourceType) GetSchema(ctx context.Context) (tfsdk
 						Computed:    true,
 						Description: "Agent 2 ID",
 					},
-					"agent_connection_group_id": {
+					"connection_group_id": {
 						Type:        types.Int64Type,
 						Computed:    true,
-						Description: "Agent connection group ID",
+						Description: "Unique identifier for the connection",
+					},
+					"services": {
+						Description: "List of services inside in network connection mesh",
+						Computed:    true,
+						Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
+							"name": {
+								Type:        types.StringType,
+								Computed:    true,
+								Description: "Network connection service name",
+							},
+							"id": {
+								Type:        types.Int64Type,
+								Computed:    true,
+								Description: "Network connection service ID",
+							},
+							"ip": {
+								Type:        types.StringType,
+								Computed:    true,
+								Description: "Network connection service IP",
+							},
+							"type": {
+								Type:        types.StringType,
+								Computed:    true,
+								Description: "Network connection service type (Kubernetes, Docker, etc.)",
+							},
+							"enabled": {
+								Type:        types.BoolType,
+								Computed:    true,
+								Description: "Is network connection service enabled?",
+							},
+							"agent_id": {
+								Type:        types.Int64Type,
+								Computed:    true,
+								Description: "Network connection agent ID that service is created",
+							},
+						}),
 					},
 				}),
 			},
@@ -78,7 +121,7 @@ func (t networkConnectionMeshResourceType) NewResource(ctx context.Context, in t
 }
 
 func (r networkConnectionMeshResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan NetworkConnectionMeshData
+	var plan NetworkConnectionMesh
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -108,6 +151,27 @@ func (r networkConnectionMeshResource) Create(ctx context.Context, req tfsdk.Cre
 		return
 	}
 
+	var connectionIDs []int32
+	for _, conn := range connections {
+		connectionIDs = append(connectionIDs, conn.ConnectionGroupID)
+	}
+
+	connectionDetails, err := getMultipleConnectionDetails(ctx, *r.provider.client.ConnectionsApi, connectionIDs)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %v services", connectionIDs), err.Error())
+		return
+	}
+
+	// Apply services to existing connections array. We update existing array to avoid creating array copy
+	for i := range connections {
+		for j := range connectionDetails {
+			if connections[i].ConnectionGroupID == connectionDetails[j].ConnectionGroupID {
+				connections[i].Services = connectionDetails[j].Services
+				break
+			}
+		}
+	}
+
 	plan.ID = types.String{Value: uuid.New().String()}
 	plan.Connections = connections
 
@@ -116,7 +180,7 @@ func (r networkConnectionMeshResource) Create(ctx context.Context, req tfsdk.Cre
 }
 
 func (r networkConnectionMeshResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var state NetworkConnectionMeshData
+	var state NetworkConnectionMesh
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -137,6 +201,27 @@ func (r networkConnectionMeshResource) Read(ctx context.Context, req tfsdk.ReadR
 	if expectedConnections != len(connections) {
 		resp.State.RemoveResource(ctx)
 		return
+	}
+
+	var connectionIDs []int32
+	for _, conn := range connections {
+		connectionIDs = append(connectionIDs, conn.ConnectionGroupID)
+	}
+
+	connectionDetails, err := getMultipleConnectionDetails(ctx, *r.provider.client.ConnectionsApi, connectionIDs)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %v services", connectionIDs), err.Error())
+		return
+	}
+
+	// Apply services to existing connections array. We update existing array to avoid creating array copy
+	for i := range connections {
+		for j := range connectionDetails {
+			if connections[i].ConnectionGroupID == connectionDetails[j].ConnectionGroupID {
+				connections[i].Services = connectionDetails[j].Services
+				break
+			}
+		}
 	}
 
 	state.Connections = connections
@@ -192,7 +277,28 @@ func (r networkConnectionMeshResource) Update(ctx context.Context, req tfsdk.Upd
 		return
 	}
 
-	newState := NetworkConnectionMeshData{
+	var connectionIDs []int32
+	for _, conn := range connections {
+		connectionIDs = append(connectionIDs, conn.ConnectionGroupID)
+	}
+
+	connectionDetails, err := getMultipleConnectionDetails(ctx, *r.provider.client.ConnectionsApi, connectionIDs)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %v services", connectionIDs), err.Error())
+		return
+	}
+
+	// Apply services to existing connections array. We update existing array to avoid creating array copy
+	for i := range connections {
+		for j := range connectionDetails {
+			if connections[i].ConnectionGroupID == connectionDetails[j].ConnectionGroupID {
+				connections[i].Services = connectionDetails[j].Services
+				break
+			}
+		}
+	}
+
+	newState := NetworkConnectionMesh{
 		ID:          plan.ID,
 		AgentIds:    plan.AgentIds,
 		Connections: connections,
@@ -204,7 +310,7 @@ func (r networkConnectionMeshResource) Update(ctx context.Context, req tfsdk.Upd
 }
 
 func (r networkConnectionMeshResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var data NetworkConnectionMeshData
+	var data NetworkConnectionMesh
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -243,7 +349,7 @@ func (r networkConnectionMeshResource) FindAndDeleteOldConnections(ctx context.C
 		}
 		if !found {
 			for _, conn := range connectionsList {
-				if int64(state.AgentIds[i]) == conn.Agent1ID || int64(state.AgentIds[i]) == conn.Agent2ID {
+				if state.AgentIds[i] == conn.Agent1ID || state.AgentIds[i] == conn.Agent2ID {
 					deleteRequest.AgentConnectionGroupIds = append(deleteRequest.AgentConnectionGroupIds, int32(conn.ConnectionGroupID))
 				}
 			}
@@ -289,9 +395,9 @@ func (r networkConnectionMeshResource) GetConnectionsListByAgentID(ctx context.C
 	var connections []Connection
 	for _, connection := range connectionList.Data {
 		connections = append(connections, Connection{
-			Agent1ID:          int64(connection.Agent1.AgentId),
-			Agent2ID:          int64(connection.Agent2.AgentId),
-			ConnectionGroupID: int64(connection.AgentConnectionGroupId),
+			Agent1ID:          connection.Agent1.AgentId,
+			Agent2ID:          connection.Agent2.AgentId,
+			ConnectionGroupID: connection.AgentConnectionGroupId,
 		})
 	}
 	return connections, nil

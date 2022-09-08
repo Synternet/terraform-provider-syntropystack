@@ -3,9 +3,10 @@ package syntropy
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
 type Connection struct {
-	Agent1ID          int64 `tfsdk:"agent_1_id"`
-	Agent2ID          int64 `tfsdk:"agent_2_id"`
-	ConnectionGroupID int64 `tfsdk:"agent_connection_group_id"`
+	Agent1ID          int32                   `tfsdk:"agent_1_id"`
+	Agent2ID          int32                   `tfsdk:"agent_2_id"`
+	ConnectionGroupID int32                   `tfsdk:"connection_group_id"`
+	Services          []ConnectionServiceData `tfsdk:"services"`
 }
 
 type NetworkConnectionMeshEdit struct {
@@ -15,17 +16,18 @@ type NetworkConnectionMeshEdit struct {
 	SdnEnabled  types.Bool   `tfsdk:"sdn_enabled"`
 }
 
-type NetworkConnectionMeshData struct {
+type NetworkConnectionMesh struct {
 	ID          types.String `tfsdk:"id"`
 	AgentIds    []int32      `tfsdk:"agent_ids"`
 	Connections []Connection `tfsdk:"connections"`
 	SdnEnabled  types.Bool   `tfsdk:"sdn_enabled"`
 }
 
-type NetworkConnectionData struct {
-	ID         types.Int64 `tfsdk:"id"`
-	AgentIds   []int64     `tfsdk:"agent_peer"`
-	SdnEnabled types.Bool  `tfsdk:"sdn_enabled"`
+type NetworkConnection struct {
+	ID         types.Int64             `tfsdk:"id"`
+	AgentIds   []int64                 `tfsdk:"agent_peer"`
+	SdnEnabled types.Bool              `tfsdk:"sdn_enabled"`
+	Services   []ConnectionServiceData `tfsdk:"services"`
 }
 
 type AgentResource struct {
@@ -40,10 +42,10 @@ type AgentSearchDataSource struct {
 	Take   types.Int64  `tfsdk:"take"`
 	Search types.String `tfsdk:"search"`
 	Filter *AgentFilter `tfsdk:"filter"`
-	Agents []Agent      `tfsdk:"agents"`
+	Agents []AgentData  `tfsdk:"agents"`
 }
 
-type Agent struct {
+type AgentData struct {
 	ID              types.Int64    `tfsdk:"id"`
 	Name            string         `tfsdk:"name"`
 	PublicIPv4      types.String   `tfsdk:"public_ipv4"`
@@ -60,6 +62,16 @@ type Agent struct {
 	AgentProvider   *AgentProvider `tfsdk:"provider"`
 }
 
+type Tag struct {
+	ID   int64  `tfsdk:"id"`
+	Name string `tfsdk:"name"`
+}
+
+type AgentProvider struct {
+	ID   int64  `tfsdk:"id"`
+	Name string `tfsdk:"name"`
+}
+
 type AgentFilter struct {
 	ID              *[]int64  `tfsdk:"id"`
 	Name            *string   `tfsdk:"name"`
@@ -74,38 +86,36 @@ type AgentFilter struct {
 	ModifiedAtTo    *string   `tfsdk:"modified_at_to"`
 }
 
-type Tag struct {
-	ID   int64  `tfsdk:"id"`
-	Name string `tfsdk:"name"`
-}
-
-type AgentProvider struct {
-	ID   int64  `tfsdk:"id"`
-	Name string `tfsdk:"name"`
-}
-
 type NetworkConnectionServiceDataSource struct {
 	ID                types.String                    `tfsdk:"id"`
-	ConnectionGroupID int64                           `tfsdk:"connection_group_id"`
-	AgentID           int64                           `tfsdk:"agent_id"`
+	ConnectionGroupID int32                           `tfsdk:"connection_group_id"`
 	Filter            *NetworkConnectionServiceFilter `tfsdk:"filter"`
-	Subnets           []ServiceSubnet                 `tfsdk:"subnets"`
+	Services          []ConnectionServiceData         `tfsdk:"services"`
 }
 
 type NetworkConnectionServiceFilter struct {
-	ServiceName *string `tfsdk:"service_name"`
-	ServiceType *string `tfsdk:"service_type"`
-	SubnetID    *int64  `tfsdk:"subnet_id"`
+	ServiceName types.String `tfsdk:"service_name_substring"`
+	ServiceType types.String `tfsdk:"service_type"`
+	ServiceID   types.Int64  `tfsdk:"service_id"`
+	AgentID     types.Int64  `tfsdk:"agent_id"`
 }
 
-type ServiceSubnet struct {
-	ID      int64  `tfsdk:"subnet_id"`
-	IP      string `tfsdk:"subnet_ip"`
-	Enabled bool   `tfsdk:"is_subnet_enabled"`
+type ConnectionServiceData struct {
+	ID           int64  `tfsdk:"id"`
+	Name         string `tfsdk:"name"`
+	IP           string `tfsdk:"ip"`
+	Type         string `tfsdk:"type"`
+	Enabled      bool   `tfsdk:"enabled"`
+	AgentID      int64  `tfsdk:"agent_id"`
+	ConnectionId int64  `tfsdk:"-"`
 }
 
-type NetworkConnectionSubnet struct {
+type ConnectionService struct {
 	ConnectionGroupID types.Int64 `tfsdk:"connection_group_id"`
-	SubnetID          types.Int64 `tfsdk:"subnet_id"`
-	Enable            types.Bool  `tfsdk:"enable"`
+	Services          []Service   `tfsdk:"services"`
+}
+
+type Service struct {
+	ID      int64 `tfsdk:"id"`
+	Enabled bool  `tfsdk:"enabled"`
 }

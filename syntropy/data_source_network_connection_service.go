@@ -3,12 +3,11 @@ package syntropy
 import (
 	"context"
 	"fmt"
-	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
+	"strings"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -32,19 +31,14 @@ func (d networkConnectionServiceDataSourceType) GetSchema(_ context.Context) (tf
 			"connection_group_id": {
 				Description: "Unique identifier for the connection.",
 				Type:        types.Int64Type,
-				Required:    true,
-			},
-			"agent_id": {
-				Description: "Syntropy agent ID",
-				Type:        types.Int64Type,
-				Required:    true,
+				Optional:    true,
 			},
 			"filter": {
 				Description: "Network connection service filters",
 				Optional:    true,
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"service_name": {
-						Description: "Filter service list by connection service name that is running on agent",
+					"service_name_substring": {
+						Description: "Filter service list by connection service name substring that is running on agent",
 						Type:        types.StringType,
 						Optional:    true,
 					},
@@ -53,31 +47,51 @@ func (d networkConnectionServiceDataSourceType) GetSchema(_ context.Context) (tf
 						Type:        types.StringType,
 						Optional:    true,
 					},
-					"subnet_id": {
+					"service_id": {
 						Description: "Filter service list by subnet ID",
+						Type:        types.Int64Type,
+						Optional:    true,
+					},
+					"agent_id": {
+						Description: "Filter service list by agent ID",
 						Type:        types.Int64Type,
 						Optional:    true,
 					},
 				}),
 			},
-			"subnets": {
-				Description: "List of subnets discovered in services",
+			"services": {
+				Description: "List of services inside in network connection",
 				Computed:    true,
 				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
-					"subnet_id": {
-						Description: "Network connection service subnet ID",
-						Type:        types.Int64Type,
-						Computed:    true,
-					},
-					"subnet_ip": {
-						Description: "Network connection service subnet IP",
+					"name": {
 						Type:        types.StringType,
 						Computed:    true,
+						Description: "Network connection service name",
 					},
-					"is_subnet_enabled": {
-						Description: "Is network connection service subnet enabled",
+					"id": {
+						Type:        types.Int64Type,
+						Computed:    true,
+						Description: "Network connection service ID",
+					},
+					"ip": {
+						Type:        types.StringType,
+						Computed:    true,
+						Description: "Network connection service IP",
+					},
+					"type": {
+						Type:        types.StringType,
+						Computed:    true,
+						Description: "Network connection service type (Kubernetes, Docker, etc.)",
+					},
+					"enabled": {
 						Type:        types.BoolType,
 						Computed:    true,
+						Description: "Is network connection service enabled?",
+					},
+					"agent_id": {
+						Type:        types.Int64Type,
+						Computed:    true,
+						Description: "Network connection agent ID that service is created",
 					},
 				}),
 			},
@@ -106,63 +120,51 @@ func (d networkConnectionServiceDataSource) Read(ctx context.Context, request tf
 		return
 	}
 
-	csID := strconv.FormatInt(data.ConnectionGroupID, 10)
-	resp, _, err := d.provider.client.ConnectionsApi.V1NetworkConnectionsServicesGet(ctx).Filter(csID).Execute()
+	resp, _, err := d.provider.client.ConnectionsApi.V1NetworkConnectionsServicesGet(ctx).Filter(fmt.Sprint(data.ConnectionGroupID)).Execute()
 	if err != nil {
 		response.Diagnostics.AddError("Error while getting network connection services", err.Error())
 		return
 	}
 
-	if len(resp.Data) == 0 {
-		response.Diagnostics.AddError(fmt.Sprintf("Connection not found by ID = %s", csID), "")
+	if len(resp.Data) != 1 {
+		response.Diagnostics.AddError(fmt.Sprintf("Something went wrong. Expected 1 connection, but got %d", len(resp.Data)), fmt.Sprintf("connection = %s", fmt.Sprint(data.ConnectionGroupID)))
 		return
 	}
 
-	var services []syntropy.V1ConnectionServiceAgentService
-
-	if resp.Data[0].Agent1.AgentId == int32(data.AgentID) {
-		services = resp.Data[0].Agent1.AgentServices
-	} else {
-		services = resp.Data[0].Agent2.AgentServices
+	connectionDetails, err := getOneConnectionDetails(ctx, *d.provider.client.ConnectionsApi, data.ConnectionGroupID)
+	if err != nil {
+		response.Diagnostics.AddError(fmt.Sprintf("Unable to get connection %v services", fmt.Sprint(data.ConnectionGroupID)), err.Error())
+		return
 	}
 
-	// Loop though connection services
-	for _, service := range services {
-
-		// Filter by agent service name field
-		if data.Filter != nil && data.Filter.ServiceName != nil && *data.Filter.ServiceName != service.AgentServiceName {
+	var filteredServices []ConnectionServiceData
+	// Filter results
+	for _, svc := range connectionDetails.Services {
+		// Filter by agent ID field
+		if data.Filter != nil && !data.Filter.AgentID.IsNull() && data.Filter.AgentID.Value != svc.AgentID {
 			continue
 		}
 
-		// Filter by agent service type field
-		if data.Filter != nil && data.Filter.ServiceType != nil && *data.Filter.ServiceType != string(service.AgentServiceType) {
+		// Filter by service type field
+		if data.Filter != nil && !data.Filter.ServiceType.IsNull() && data.Filter.ServiceType.Value != svc.Type {
 			continue
 		}
 
-		// Loop through service subnets
-		for _, subnet := range service.AgentServiceSubnets {
-
-			// Filter by subnet ID field
-			if data.Filter != nil && data.Filter.SubnetID != nil && *data.Filter.SubnetID != int64(subnet.AgentServiceSubnetId) {
-				continue
-			}
-
-			subnetEnabled := false
-
-			// Loop through remote subnets which were enabled
-			for _, enabledSubnet := range resp.Data[0].AgentConnectionSubnets {
-				if subnet.AgentServiceSubnetId == enabledSubnet.AgentServiceSubnetId {
-					subnetEnabled = enabledSubnet.AgentConnectionSubnetIsEnabled
-				}
-			}
-			data.Subnets = append(data.Subnets, ServiceSubnet{
-				ID:      int64(subnet.AgentServiceSubnetId),
-				IP:      subnet.AgentServiceSubnetIp,
-				Enabled: subnetEnabled,
-			})
+		// Filter by service name field
+		if data.Filter != nil && !data.Filter.ServiceName.IsNull() && !strings.Contains(svc.Name, data.Filter.ServiceName.Value) {
+			continue
 		}
+
+		// Filter by service ID field
+		if data.Filter != nil && !data.Filter.ServiceID.IsNull() && data.Filter.ServiceID.Value != svc.ID {
+			continue
+		}
+
+		filteredServices = append(filteredServices, svc)
 	}
+
 	data.ID = types.String{Value: uuid.New().String()}
+	data.Services = filteredServices
 	diags = response.State.Set(ctx, &data)
 	response.Diagnostics.Append(diags...)
 }
