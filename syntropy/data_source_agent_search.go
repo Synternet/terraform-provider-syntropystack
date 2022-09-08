@@ -105,7 +105,7 @@ func (d agentSearchDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, d
 						Type:        types.StringType,
 					},
 					"name": {
-						Description: "Filter by agent modified at to date",
+						Description: "Filter by agent name",
 						Optional:    true,
 						Type:        types.StringType,
 					},
