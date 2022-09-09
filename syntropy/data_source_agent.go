@@ -129,7 +129,7 @@ type agentDataSource struct {
 }
 
 func (d agentDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
-	var data Agent
+	var data AgentData
 	ctx = d.provider.createAuthContext(ctx)
 	diags := req.Config.Get(ctx, &data)
 	resp.Diagnostics.Append(diags...)
@@ -153,15 +153,15 @@ func (d agentDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReque
 	}
 
 	for _, agent := range aResp.Data {
-		data = Agent{
+		data = AgentData{
 			ID:              types.Int64{Value: int64(agent.AgentId)},
 			Name:            agent.AgentName,
 			PublicIPv4:      types.String{Value: agent.AgentPublicIpv4},
-			Status:          types.String{Value: NullableAgentStatusToString(agent.AgentStatus)},
+			Status:          types.String{Value: nullableAgentStatusToString(agent.AgentStatus)},
 			IsOnline:        types.Bool{Value: agent.AgentIsOnline},
 			Version:         types.String{Value: agent.AgentVersion},
-			LocationCountry: types.String{Value: NullableStringToString(agent.AgentLocationCountry)},
-			LocationCity:    types.String{Value: NullableStringToString(agent.AgentLocationCity)},
+			LocationCountry: types.String{Value: nullableStringToString(agent.AgentLocationCountry)},
+			LocationCity:    types.String{Value: nullableStringToString(agent.AgentLocationCity)},
 			DeviceID:        types.String{Value: agent.AgentDeviceId},
 			IsVirtual:       types.Bool{Value: agent.AgentIsVirtual},
 			Type:            types.String{Value: string(agent.AgentType)},

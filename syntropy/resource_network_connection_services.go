@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -12,54 +13,63 @@ import (
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
-var _ tfsdk.ResourceType = networkConnectionSubnetResourceType{}
-var _ tfsdk.Resource = networkConnectionSubnetResource{}
-var _ tfsdk.ResourceWithImportState = networkConnectionSubnetResource{}
+var _ tfsdk.ResourceType = networkConnectionServiceResourceType{}
+var _ tfsdk.Resource = networkConnectionServiceResource{}
+var _ tfsdk.ResourceWithImportState = networkConnectionServiceResource{}
 
-type networkConnectionSubnetResourceType struct{}
+type networkConnectionServiceResourceType struct{}
 
-type networkConnectionSubnetResource struct {
+type networkConnectionServiceResource struct {
 	provider provider
 }
 
-func (t networkConnectionSubnetResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (t networkConnectionServiceResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "Enables services inside connection group",
 		Attributes: map[string]tfsdk.Attribute{
 			"connection_group_id": {
-				Description: "Connection group ID",
+				Description: "Unique identifier for the connection",
 				Type:        types.Int64Type,
 				Required:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.RequiresReplace(),
 				},
 			},
-			"subnet_id": {
-				Description: "Subnet ID",
-				Type:        types.Int64Type,
+			"services": {
+				Description: "List of network connection services to enable",
 				Required:    true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
+				Validators: []tfsdk.AttributeValidator{
+					setvalidator.SizeAtLeast(1),
 				},
-			},
-			"enable": {
-				Description: "Should service be enabled",
-				Type:        types.BoolType,
-				Required:    true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
+				Attributes: tfsdk.SetNestedAttributes(map[string]tfsdk.Attribute{
+					"id": {
+						Type:        types.Int64Type,
+						Required:    true,
+						Description: "Network connection service ID",
+					},
+					"enabled": {
+						Type:        types.BoolType,
+						Required:    true,
+						Description: "Should network connection service be enabled?",
+					},
+				}),
 			},
 		},
 	}, nil
 }
 
-func (t networkConnectionSubnetResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (t networkConnectionServiceResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
-	return networkConnectionSubnetResource{
+	return networkConnectionServiceResource{
 		provider: provider,
 	}, diags
 }
 
-func (r networkConnectionSubnetResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan NetworkConnectionSubnet
+func (r networkConnectionServiceResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan ConnectionService
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -67,15 +77,19 @@ func (r networkConnectionSubnetResource) Create(ctx context.Context, req tfsdk.C
 		return
 	}
 
+	var changes []syntropy.AgentServicesUpdateChanges
+
+	for _, service := range plan.Services {
+		changes = append(changes, syntropy.AgentServicesUpdateChanges{
+			AgentServiceSubnetId: int32(service.ID),
+			IsEnabled:            service.Enabled,
+		})
+	}
+
 	groupId := int32(plan.ConnectionGroupID.Value)
 	_, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsServicesUpdate(ctx).V1NetworkConnectionsServicesUpdateRequest(syntropy.V1NetworkConnectionsServicesUpdateRequest{
 		AgentConnectionGroupId: &groupId,
-		Changes: []syntropy.AgentServicesUpdateChanges{
-			{
-				AgentServiceSubnetId: int32(plan.SubnetID.Value),
-				IsEnabled:            plan.Enable.Value,
-			},
-		},
+		Changes:                changes,
 	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Error while updating connection service", err.Error())
@@ -86,8 +100,8 @@ func (r networkConnectionSubnetResource) Create(ctx context.Context, req tfsdk.C
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r networkConnectionSubnetResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var state NetworkConnectionSubnet
+func (r networkConnectionServiceResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var state ConnectionService
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -107,11 +121,12 @@ func (r networkConnectionSubnetResource) Read(ctx context.Context, req tfsdk.Rea
 		return
 	}
 
-	state.Enable = types.Bool{Value: false}
-	for _, subnet := range connection.Data[0].AgentConnectionSubnets {
-		if int64(subnet.AgentServiceSubnetId) == state.SubnetID.Value {
-			state.Enable = types.Bool{Value: subnet.AgentConnectionSubnetIsEnabled}
-			break
+	for _, stateServices := range state.Services {
+		for _, remoteServices := range connection.Data[0].AgentConnectionSubnets {
+			if int32(stateServices.ID) == remoteServices.AgentServiceSubnetId {
+				stateServices.Enabled = remoteServices.AgentConnectionSubnetIsEnabled
+				break
+			}
 		}
 	}
 
@@ -120,10 +135,11 @@ func (r networkConnectionSubnetResource) Read(ctx context.Context, req tfsdk.Rea
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
 }
 
-func (r networkConnectionSubnetResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan NetworkConnectionSubnet
+func (r networkConnectionServiceResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	var plan ConnectionService
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -131,15 +147,19 @@ func (r networkConnectionSubnetResource) Update(ctx context.Context, req tfsdk.U
 		return
 	}
 
+	var changes []syntropy.AgentServicesUpdateChanges
+
+	for _, service := range plan.Services {
+		changes = append(changes, syntropy.AgentServicesUpdateChanges{
+			AgentServiceSubnetId: int32(service.ID),
+			IsEnabled:            service.Enabled,
+		})
+	}
+
 	groupId := int32(plan.ConnectionGroupID.Value)
 	_, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsServicesUpdate(ctx).V1NetworkConnectionsServicesUpdateRequest(syntropy.V1NetworkConnectionsServicesUpdateRequest{
 		AgentConnectionGroupId: &groupId,
-		Changes: []syntropy.AgentServicesUpdateChanges{
-			{
-				AgentServiceSubnetId: int32(plan.SubnetID.Value),
-				IsEnabled:            plan.Enable.Value,
-			},
-		},
+		Changes:                changes,
 	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Error while updating network connection service", err.Error())
@@ -150,11 +170,20 @@ func (r networkConnectionSubnetResource) Update(ctx context.Context, req tfsdk.U
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r networkConnectionSubnetResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var state NetworkConnectionSubnet
+func (r networkConnectionServiceResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	var state ConnectionService
 	ctx = r.provider.createAuthContext(ctx)
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
+
+	var changes []syntropy.AgentServicesUpdateChanges
+
+	for _, service := range state.Services {
+		changes = append(changes, syntropy.AgentServicesUpdateChanges{
+			AgentServiceSubnetId: int32(service.ID),
+			IsEnabled:            false,
+		})
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -162,12 +191,7 @@ func (r networkConnectionSubnetResource) Delete(ctx context.Context, req tfsdk.D
 	groupId := int32(state.ConnectionGroupID.Value)
 	_, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsServicesUpdate(ctx).V1NetworkConnectionsServicesUpdateRequest(syntropy.V1NetworkConnectionsServicesUpdateRequest{
 		AgentConnectionGroupId: &groupId,
-		Changes: []syntropy.AgentServicesUpdateChanges{
-			{
-				AgentServiceSubnetId: int32(state.SubnetID.Value),
-				IsEnabled:            false,
-			},
-		},
+		Changes:                changes,
 	}).Execute()
 	if err != nil {
 		resp.Diagnostics.AddError("Error while updating network connection service", err.Error())
@@ -175,6 +199,6 @@ func (r networkConnectionSubnetResource) Delete(ctx context.Context, req tfsdk.D
 	}
 }
 
-func (r networkConnectionSubnetResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r networkConnectionServiceResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

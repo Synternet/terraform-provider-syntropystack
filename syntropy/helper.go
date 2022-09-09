@@ -1,11 +1,14 @@
 package syntropy
 
 import (
+	"context"
+	"fmt"
 	"github.com/SyntropyNet/syntropy-sdk-go/syntropy"
+	"strings"
 	"time"
 )
 
-func NullableStringToString(s syntropy.NullableString) string {
+func nullableStringToString(s syntropy.NullableString) string {
 	val := s.Get()
 	if val == nil {
 		return ""
@@ -13,7 +16,7 @@ func NullableStringToString(s syntropy.NullableString) string {
 	return *val
 }
 
-func NullableAgentStatusToString(s syntropy.NullableAgentStatus) string {
+func nullableAgentStatusToString(s syntropy.NullableAgentStatus) string {
 	val := s.Get()
 	if val == nil {
 		return ""
@@ -70,4 +73,66 @@ func sumOfNaturalNumbers(n int) (sum int) {
 		sum += i
 	}
 	return sum
+}
+
+func getOneConnectionDetails(ctx context.Context, clt syntropy.ConnectionsApiService, connectionIDs int32) (*Connection, error) {
+	connections, err := parseConnectionServices(clt.V1NetworkConnectionsServicesGet(ctx), []int32{connectionIDs})
+	if err != nil {
+		return nil, err
+	}
+	if len(connections) != 1 {
+		return nil, fmt.Errorf("something went wrong. Expected 1 connection but got %d", len(connections))
+	}
+	return &connections[0], nil
+}
+
+func getMultipleConnectionDetails(ctx context.Context, clt syntropy.ConnectionsApiService, connectionIDs []int32) ([]Connection, error) {
+	return parseConnectionServices(clt.V1NetworkConnectionsServicesGet(ctx), connectionIDs)
+}
+
+func parseConnectionServices(clt syntropy.ApiV1NetworkConnectionsServicesGetRequest, connectionIDs []int32) ([]Connection, error) {
+	connS := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(connectionIDs)), ","), "[]")
+	remote, _, err := clt.Filter(connS).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("error while getting network connection service: %e", err)
+	}
+
+	var connections []Connection
+	// Loop through all connections
+	for _, connection := range remote.Data {
+		var services []ConnectionServiceData
+		// Loop through agents in that connection. One connection has 2 separate agents
+		for _, agent := range []syntropy.V1ConnectionServiceAgent{connection.Agent1, connection.Agent2} {
+			// Loop through agent services
+			for _, service := range agent.AgentServices {
+				// Loop through service subnets (id of subnet will be used to enable specific service/subnet)
+				for _, subnet := range service.AgentServiceSubnets {
+					// Check if subnet is enabled
+					enabled := false
+					for _, enabledSubnet := range connection.AgentConnectionSubnets {
+						if enabledSubnet.AgentServiceSubnetId == subnet.AgentServiceSubnetId {
+							enabled = enabledSubnet.AgentConnectionSubnetIsEnabled
+							break
+						}
+					}
+					services = append(services, ConnectionServiceData{
+						ID:           int64(subnet.AgentServiceSubnetId),
+						Name:         service.AgentServiceName,
+						IP:           subnet.AgentServiceSubnetIp,
+						Type:         string(service.AgentServiceType),
+						Enabled:      enabled,
+						AgentID:      int64(agent.AgentId),
+						ConnectionId: int64(connection.AgentConnectionGroupId),
+					})
+				}
+			}
+		}
+		connections = append(connections, Connection{
+			Agent1ID:          connection.Agent1.AgentId,
+			Agent2ID:          connection.Agent2.AgentId,
+			ConnectionGroupID: connection.AgentConnectionGroupId,
+			Services:          services,
+		})
+	}
+	return connections, nil
 }
