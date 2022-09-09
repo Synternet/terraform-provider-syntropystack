@@ -123,7 +123,7 @@ func (r networkConnectionResource) Create(ctx context.Context, req tfsdk.CreateR
 	}
 
 	if len(connection.Data) == 0 {
-		resp.Diagnostics.AddError(fmt.Sprintf("Connection already exists between agents agent_1_id=%d, agent_2_id=%d", plan.AgentIds[0], plan.AgentIds[1]), "Import network connection to state")
+		resp.Diagnostics.AddError(fmt.Sprintf("Something went wrong while createing connection between agent_1_id=%d, agent_2_id=%d", plan.AgentIds[0], plan.AgentIds[1]), "Import network connection to state if connection already exists")
 		return
 	}
 
