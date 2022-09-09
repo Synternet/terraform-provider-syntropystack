@@ -36,7 +36,7 @@ resource "syntropystack_network_connection_mesh" "test_connection_mesh" {
 
 ### Read-Only
 
-- `connections` (Attributes List) Created connections (see [below for nested schema](#nestedatt--connections))
+- `connections` (Attributes List) List of network connections created by mesh resource (see [below for nested schema](#nestedatt--connections))
 - `id` (String) Network connection mesh ID randomly generated
 
 <a id="nestedatt--connections"></a>
@@ -46,6 +46,20 @@ Read-Only:
 
 - `agent_1_id` (Number) Agent 1 ID
 - `agent_2_id` (Number) Agent 2 ID
-- `agent_connection_group_id` (Number) Agent connection group ID
+- `connection_group_id` (Number) Unique identifier for the connection
+- `services` (Attributes List) List of services inside in network connection mesh (see [below for nested schema](#nestedatt--connections--services))
+
+<a id="nestedatt--connections--services"></a>
+### Nested Schema for `connections.services`
+
+Read-Only:
+
+- `agent_id` (Number) Network connection agent ID that service is created
+- `enabled` (Boolean) Is network connection service enabled?
+- `id` (Number) Network connection service ID
+- `ip` (String) Network connection service IP
+- `name` (String) Network connection service name
+- `type` (String) Network connection service type (Kubernetes, Docker, etc.)
+
 
 

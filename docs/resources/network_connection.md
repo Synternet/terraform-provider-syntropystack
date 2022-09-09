@@ -33,5 +33,19 @@ resource "syntropystack_network_connection" "p2p" {
 
 ### Read-Only
 
-- `id` (Number) Network connection ID
+- `id` (Number) Unique identifier for the connection
+- `services` (Attributes List) List of services inside in network connection (see [below for nested schema](#nestedatt--services))
+
+<a id="nestedatt--services"></a>
+### Nested Schema for `services`
+
+Read-Only:
+
+- `agent_id` (Number) Network connection agent ID that service is created
+- `enabled` (Boolean) Is network connection service enabled?
+- `id` (Number) Network connection service ID
+- `ip` (String) Network connection service IP
+- `name` (String) Network connection service name
+- `type` (String) Network connection service type (Kubernetes, Docker, etc.)
+
 

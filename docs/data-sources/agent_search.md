@@ -50,7 +50,7 @@ Optional:
 - `location_country` (Set of String) Filter by agent location country
 - `modified_at_from` (String) Filter by agent modified at from date
 - `modified_at_to` (String) Filter by agent modified at to date
-- `name` (String) Filter by agent modified at to date
+- `name` (String) Filter by agent name
 - `provider_id` (Set of Number) Filter by agent provider ID
 - `status` (Set of String) Filter by agent status
 - `tag_id` (Set of Number) Filter by agent tag ID
