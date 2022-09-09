@@ -122,11 +122,16 @@ func (r networkConnectionServiceResource) Read(ctx context.Context, req tfsdk.Re
 	}
 
 	for _, stateServices := range state.Services {
+		found := false
 		for _, remoteServices := range connection.Data[0].AgentConnectionSubnets {
 			if int32(stateServices.ID) == remoteServices.AgentServiceSubnetId {
 				stateServices.Enabled = remoteServices.AgentConnectionSubnetIsEnabled
+				found = true
 				break
 			}
+		}
+		if !found {
+			stateServices.Enabled = false
 		}
 	}
 
