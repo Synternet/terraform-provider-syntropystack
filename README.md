@@ -9,7 +9,7 @@
 The Terraform Syntropy provider is a plugin for Terraform that allows for the full lifecycle management of Syntropy
 network resources.
 
-_Syntropy terraform provider is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). Syntropy terraform provider built on the [Terraform Plugin SDK](https://github.com/hashicorp/terraform-plugin-sdk)._
+_Syntropy terraform provider is built on the [Terraform Plugin Framework](https://github.com/hashicorp/terraform-plugin-framework). 
 
 ## Requirements
 
