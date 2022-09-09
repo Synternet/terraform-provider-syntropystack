@@ -1,8 +1,4 @@
-<a href="https://terraform.io">
-    <img src="assets/terraform_logo.png" alt="Terraform logo" title="Terraform" align="right" height="50" />
-</a>
-
-# Terraform Provider for Syntropy
+# Terraform Provider for Syntropy Stack
 
 ---
 
