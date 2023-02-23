@@ -21,7 +21,7 @@ func nullableAgentStatusToString(s syntropy.NullableAgentStatus) string {
 	if val == nil {
 		return ""
 	}
-	return string(*val)
+	return val.AgentStatus
 }
 
 func convertAgentTagsToTfValue(in []syntropy.AgentTag) []Tag {

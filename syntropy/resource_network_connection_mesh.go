@@ -129,9 +129,9 @@ func (r networkConnectionMeshResource) Create(ctx context.Context, req tfsdk.Cre
 		return
 	}
 
-	var agentList []syntropy.V1NetworkConnectionsCreateMeshRequestAgentIds
+	var agentList []syntropy.V1NetworkConnectionsCreateMeshRequestAgentIdsInner
 	for _, i := range plan.AgentIds {
-		agentList = append(agentList, syntropy.V1NetworkConnectionsCreateMeshRequestAgentIds{
+		agentList = append(agentList, syntropy.V1NetworkConnectionsCreateMeshRequestAgentIdsInner{
 			AgentId: i,
 		})
 	}
@@ -255,9 +255,9 @@ func (r networkConnectionMeshResource) Update(ctx context.Context, req tfsdk.Upd
 		return
 	}
 
-	var agentList []syntropy.V1NetworkConnectionsCreateMeshRequestAgentIds
+	var agentList []syntropy.V1NetworkConnectionsCreateMeshRequestAgentIdsInner
 	for _, i := range plan.AgentIds {
-		agentList = append(agentList, syntropy.V1NetworkConnectionsCreateMeshRequestAgentIds{
+		agentList = append(agentList, syntropy.V1NetworkConnectionsCreateMeshRequestAgentIdsInner{
 			AgentId: i,
 		})
 	}

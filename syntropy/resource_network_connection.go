@@ -109,7 +109,7 @@ func (r networkConnectionResource) Create(ctx context.Context, req tfsdk.CreateR
 	}
 
 	connection, _, err := r.provider.client.ConnectionsApi.V1NetworkConnectionsCreateP2P(ctx).V1NetworkConnectionsCreateP2PRequest(syntropy.V1NetworkConnectionsCreateP2PRequest{
-		AgentPairs: []syntropy.V1NetworkConnectionsCreateP2PRequestAgentPairs{
+		AgentPairs: []syntropy.V1NetworkConnectionsCreateP2PRequestAgentPairsInner{
 			{
 				Agent2Id: int32(plan.AgentIds[0]),
 				Agent1Id: int32(plan.AgentIds[1]),
